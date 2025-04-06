@@ -7,7 +7,6 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Dummy user authentication
 const users = { admin: "password" };
 
 app.post("/login", (req, res) => {
@@ -19,7 +18,6 @@ app.post("/login", (req, res) => {
     }
 });
 
-// Execute secure system call (runs C/C++ binary)
 app.get("/execute", (req, res) => {
     exec("./secure_syscall", (error, stdout, stderr) => {
         if (error) {
@@ -30,7 +28,7 @@ app.get("/execute", (req, res) => {
     });
 });
 
-// Fetch logs
+
 app.get("/logs", (req, res) => {
     fs.readFile("logs.txt", "utf8", (err, data) => {
         if (err) return res.status(500).json({ error: "Failed to fetch logs" });
