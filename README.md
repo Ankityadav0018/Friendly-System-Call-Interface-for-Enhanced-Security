@@ -33,20 +33,35 @@ The system architecture consists of the following components:
 
 
 ## Installation
-
 ```bash
 git clone https://github.com/yourusername/fsci-secure-interface.git
 cd fsci-secure-interface
 make
 sudo make install
+```
+
 
 ## Usage
 
-'''bash
+```bash
 #include "fsci.h"
 
 int fd = fsci_open("secure_file.txt", O_RDONLY);
 fsci_read(fd, buffer, sizeof(buffer));
 fsci_close(fd);
+```
 
+## Security Highlights
+Input Sanitization: All inputs to system calls are validated at the FSCI layer.
 
+Least Privilege Access: Built-in mechanisms prevent unauthorized access.
+
+Isolation: Interfaces can be sandboxed to reduce risk from compromised applications.
+
+Monitoring Hooks: Real-time monitoring for suspicious behavior.
+
+## Contributing
+We welcome contributions! Please submit pull requests or open issues to discuss changes. Refer to CONTRIBUTING.md for details.
+
+## Acknowledgements
+This project is part of academic work focused on secure OS interface design. Special thanks to contributors and researchers involved.
