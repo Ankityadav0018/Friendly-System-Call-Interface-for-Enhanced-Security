@@ -40,7 +40,9 @@ cd fsci-secure-interface
 make
 sudo make install
 
+## Usage
 
+'''bash
 #include "fsci.h"
 
 int fd = fsci_open("secure_file.txt", O_RDONLY);
