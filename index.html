@@ -1,91 +1,425 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure System Call Interface</title>
-    <link rel="stylesheet" href="styles.css">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background-color: #f4f4f4;
-            padding: 20px;
-        }
-        header {
-            background: #333;
-            color: white;
-            padding: 10px 0;
-        }
-        section {
-            background: white;
-            padding: 20px;
-            margin: 20px auto;
-            width: 50%;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-        }
-        input, button {
-            display: block;
-            width: 100%;
-            margin: 10px 0;
-            padding: 10px;
-        }
-        button {
-            background: #333;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        button:hover {
-            background: #555;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Enhanced System Call Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background-color: #4b5563;
+      border-radius: 8px;
+    }
+    .security-critical {
+      border-left: 4px solid #ef4444;
+    }
+    .security-warning {
+      border-left: 4px solid #f59e0b;
+    }
+    .security-safe {
+      border-left: 4px solid #10b981;
+    }
+    .circular-chart {
+      display: block;
+      margin: 0 auto;
+      max-width: 100%;
+      max-height: 100%;
+    }
+    .circle-bg {
+      fill: none;
+      stroke: #374151;
+      stroke-width: 3;
+    }
+    .circle {
+      fill: none;
+      stroke-width: 3;
+      stroke-linecap: round;
+      animation: progress 1s ease-out forwards;
+    }
+    @keyframes progress {
+      0% { stroke-dasharray: 0, 100; }
+    }
+    .percentage {
+      fill: #fff;
+      font-size: 0.4em;
+      text-anchor: middle;
+    }
+  </style>
 </head>
-<body>
-    <header>
-        <h1>Secure System Call Interface</h1>
-    </header>
-    <main>
-        <section id="login">
-            <h2>Login</h2>
-            <form id="loginForm">
-                <label for="username">Username:</label>
-                <input type="text" id="username" required>
-                <label for="password">Password:</label>
-                <input type="password" id="password" required>
-                <button type="submit">Login</button>
-            </form>
-        </section>
-        <section id="dashboard" style="display: none;">
-            <h2>System Call Dashboard</h2>
-            <button onclick="fetchLogs()">View Logs</button>
-            <button onclick="secureSyscall()">Execute Secure System Call</button>
-            <div id="logs"></div>
-        </section>
-    </main>
-    <script>
-        document.getElementById("loginForm").addEventListener("submit", function(event) {
-            event.preventDefault();
-            const username = document.getElementById("username").value;
-            const password = document.getElementById("password").value;
+<body class="bg-gray-900 text-white">
+
+<!-- Login Section -->
+<div id="loginSection" class="min-h-screen flex items-center justify-center px-4">
+  <div class="bg-gray-800 p-8 rounded-2xl shadow-xl w-full max-w-md">
+    <h2 class="text-3xl font-bold mb-6 text-center text-blue-400">System Call Dashboard</h2>
+    <form id="loginForm" class="space-y-5">
+      <div>
+        <label for="username" class="block text-sm font-medium">Username</label>
+        <input type="text" id="username" required class="w-full px-4 py-2 mt-1 rounded-lg bg-gray-700 border border-gray-600" />
+      </div>
+      <div>
+        <label for="password" class="block text-sm font-medium">Password</label>
+        <input type="password" id="password" required class="w-full px-4 py-2 mt-1 rounded-lg bg-gray-700 border border-gray-600" />
+      </div>
+      <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded-lg">Login</button>
+    </form>
+    <p id="message" class="mt-4 text-center text-red-400"></p>
+  </div>
+</div>
+
+<!-- System Call Chart -->
+<div id="chartContainer" class="hidden bg-gray-800 p-6 mt-6 rounded-xl shadow">
+  <h2 class="text-xl font-semibold text-blue-400 mb-4">System Call Frequency Chart</h2>
+  <canvas id="syscallChart" class="w-full h-96"></canvas>
+</div>
+
+<!-- Dashboard Section -->
+<div id="dashboardSection" class="hidden p-6">
+  <div class="flex justify-between mb-4">
+    <h1 class="text-4xl font-bold text-blue-400">System Monitor</h1>
+    <div>
+      <button id="downloadLog" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg mr-2">Download Log</button>
+      <button id="logoutBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">Logout</button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">
+    <div class="bg-gray-800 p-4 rounded-xl shadow security-warning">
+      <h2 class="text-xl font-semibold mb-2">CPU Usage</h2>
+      <div class="flex items-center">
+        <div id="cpuGauge" class="w-16 h-16 mr-4"></div>
+        <p id="cpuUsage" class="text-lg">Loading...</p>
+      </div>
+    </div>
+    <div class="bg-gray-800 p-4 rounded-xl shadow security-warning">
+      <h2 class="text-xl font-semibold mb-2">Memory Usage</h2>
+      <div class="flex items-center">
+        <div id="memoryGauge" class="w-16 h-16 mr-4"></div>
+        <p id="memoryUsage" class="text-lg">Loading...</p>
+      </div>
+    </div>
+    <div class="bg-gray-800 p-4 rounded-xl shadow security-critical">
+      <h2 class="text-xl font-semibold mb-2">System Calls</h2>
+      <p id="readWriteFork" class="text-lg">Loading...</p>
+      <div class="mt-2 text-sm text-gray-400" id="callSecurityStatus"></div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 bg-gray-800 p-4 rounded-xl shadow">
+      <h2 class="text-xl font-semibold mb-2">System Call Log</h2>
+      <div id="syscallLog" class="h-64 overflow-y-auto bg-gray-700 p-3 rounded-lg text-sm font-mono space-y-1">
+        <p>Initializing log...</p>
+      </div>
+    </div>
+    <div class="bg-gray-800 p-4 rounded-xl shadow">
+      <h2 class="text-xl font-semibold mb-2 text-blue-400">System Call Form</h2>
+      <form id="sysCallForm" class="space-y-4">
+        <div>
+          <label for="callType" class="block text-sm font-medium mb-1">Call Type</label>
+          <select id="callType" class="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600">
+            <option value="read">Read</option>
+            <option value="write">Write</option>
+            <option value="fork">Fork</option>
             
-            if (username === "admin" && password === "password") { // Dummy authentication
-                document.getElementById("login").style.display = "none";
-                document.getElementById("dashboard").style.display = "block";
-            } else {
-                alert("Invalid Credentials");
+          </select>
+        </div>
+        <div>
+          <label for="param1" class="block text-sm font-medium mb-1">File Descriptor</label>
+          <input type="number" id="param1" min="0" max="1024" class="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600" />
+        </div>
+        <div>
+          <label for="param2" class="block text-sm font-medium mb-1">Buffer/Path</label>
+          <input type="text" id="param2" class="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600" />
+        </div>
+        <div>
+          <label for="param3" class="block text-sm font-medium mb-1">Size/Flags</label>
+          <input type="number" id="param3" min="0" class="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600" />
+        </div>
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg">Execute</button>
+      </form>
+    </div>
+  </div>
+  <div class="mt-6 bg-gray-800 p-4 rounded-xl shadow">
+    <h2 class="text-xl font-semibold mb-2 text-blue-400">Security Analysis</h2>
+    <div id="securityAnalysis" class="text-sm">
+      <p>No system calls executed yet. Security analysis will appear here.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  const loginForm = document.getElementById("loginForm");
+  const message = document.getElementById("message");
+  const loginSection = document.getElementById("loginSection");
+  const dashboardSection = document.getElementById("dashboardSection");
+  const sysCallForm = document.getElementById("sysCallForm");
+  const logoutBtn = document.getElementById("logoutBtn");
+  const downloadLog = document.getElementById("downloadLog");
+  const securityAnalysis = document.getElementById("securityAnalysis");
+  const callSecurityStatus = document.getElementById("callSecurityStatus");
+
+  let systemState = {
+    callType: "read",
+    param1: 1,
+    param2: "buffer",
+    param3: 200,
+    securityLevel: "medium",
+    callHistory: []
+  };
+
+  const securityRules = {
+    read: {
+      safe: (fd, buf, count) => fd > 1 && count <= 4096,
+      warning: (fd, buf, count) => fd <= 1 || count > 4096,
+      message: (fd, buf, count) => {
+        if (fd <= 1) return "Reading from standard file descriptors";
+        if (fd == 2) return "Writing to standard file error";
+        if (count > 4096) return "Large read operation (>4KB)";
+        return "Safe read operation";
+      }
+    },
+    write: {
+      safe: (fd, buf, count) => fd > 1 && count <= 4096,
+      warning: (fd, buf, count) => fd <= 1 || count > 4096,
+      message: (fd, buf, count) => {
+        if (fd <= 1) return "Writing to standard file descriptors";
+        if (fd == 2) return "Writing to standard file error";
+        if (count > 4096) return "Large write operation (>4KB)";
+        return "Safe write operation";
+      }
+    },
+    fork: {
+      safe: () => false,
+      warning: () => true,
+      message: () => "Fork creates a new process - potential risk"
+    }
+  };
+
+  loginForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    if (username === "admin" && password === "admin123") {
+      message.style.color = "green";
+      message.textContent = "Login successful!";
+      setTimeout(() => {
+        loginSection.classList.add("hidden");
+        dashboardSection.classList.remove("hidden");
+        startDashboard();
+      }, 1000);
+    } else {
+      message.textContent = "Invalid credentials! Try admin123";
+    }
+  });
+
+  logoutBtn.addEventListener("click", () => {
+    dashboardSection.classList.add("hidden");
+    loginSection.classList.remove("hidden");
+    message.textContent = "Logged out successfully";
+    message.style.color = "green";
+  });
+
+  sysCallForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    systemState.callType = document.getElementById("callType").value;
+    systemState.param1 = document.getElementById("param1").value || 1;
+    systemState.param2 = document.getElementById("param2").value || "buffer";
+    systemState.param3 = document.getElementById("param3").value || 200;
+
+    analyzeSystemCall();
+
+    systemState.callHistory.push({
+      type: systemState.callType,
+      params: [systemState.param1, systemState.param2, systemState.param3],
+      timestamp: new Date().toISOString()
+    });
+
+    updateCallDisplay();
+    updateSecurityAnalysis();
+  });
+
+  function analyzeSystemCall() {
+    const { callType, param1, param2, param3 } = systemState;
+    const rule = securityRules[callType] || securityRules.read;
+
+    if (rule.safe(param1, param2, param3)) {
+      systemState.securityLevel = "safe";
+    } else if (rule.warning(param1, param2, param3)) {
+      systemState.securityLevel = "warning";
+    } else {
+      systemState.securityLevel = "critical";
+    }
+
+    callSecurityStatus.textContent = rule.message(param1, param2, param3);
+    callSecurityStatus.className = `text-sm mt-2 ${
+      systemState.securityLevel === "safe" ? "text-green-400" :
+      systemState.securityLevel === "warning" ? "text-yellow-400" : "text-red-400"
+    }`;
+  }
+
+  function updateSecurityAnalysis() {
+    if (systemState.callHistory.length === 0) return;
+    const recentCalls = systemState.callHistory.slice(-5).reverse();
+    let html = '<div class="space-y-3">';
+    recentCalls.forEach(call => {
+      const rule = securityRules[call.type] || securityRules.read;
+      const level = rule.safe(...call.params) ? 'safe' : rule.warning(...call.params) ? 'warning' : 'critical';
+      const color = level === 'safe' ? 'bg-gray-700' : level === 'warning' ? 'bg-yellow-900' : 'bg-red-900';
+      html += `<div class="p-3 rounded-lg ${color}">
+        <div class="font-bold">${call.type.toUpperCase()} call</div>
+        <div class="text-xs opacity-80">${new Date(call.timestamp).toLocaleString()}</div>
+        <div class="mt-1 text-sm">${rule.message(...call.params)}</div>
+        <div class="text-xs mt-1">Params: ${call.params.join(", ")}</div>
+      </div>`;
+    });
+    html += '</div>';
+    securityAnalysis.innerHTML = html;
+  }
+
+  function updateCallDisplay() {
+    const { callType, param1, param2, param3 } = systemState;
+    const log = document.getElementById("syscallLog");
+    const callText = `${callType.toUpperCase()}(fd=${param1}, buf=${param2}, count=${param3})`;
+    document.getElementById("readWriteFork").textContent = callText;
+    const line = document.createElement("p");
+    line.textContent = `[${new Date().toLocaleTimeString()}] ${callText}`;
+    line.className = systemState.securityLevel === "safe" ? "text-green-400" :
+                     systemState.securityLevel === "warning" ? "text-yellow-400" : "text-red-400";
+    log.appendChild(line);
+    if (log.children.length > 100) log.removeChild(log.firstChild);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function createGauge(elementId, value) {
+    const element = document.getElementById(elementId);
+    element.innerHTML = `<svg viewBox="0 0 36 36" class="circular-chart">
+      <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+      <path class="circle" stroke="${value > 85 ? '#ef4444' : value > 70 ? '#f59e0b' : '#10b981'}" stroke-dasharray="${value}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+      <text x="18" y="20.5" class="percentage">${value}%</text>
+    </svg>`;
+  }
+
+  function startDashboard() {
+    createGauge("cpuGauge", 0);
+    createGauge("memoryGauge", 0);
+    const cpuText = document.getElementById("cpuUsage");
+    const memText = document.getElementById("memoryUsage");
+
+    setInterval(() => {
+      const cpu = Math.round(Math.random() * 40 + 40);
+      const mem = Math.round(Math.random() * 30 + 50);
+      createGauge("cpuGauge", cpu);
+      createGauge("memoryGauge", mem);
+      cpuText.textContent = `${cpu}%`;
+      memText.textContent = `${mem}%`;
+    }, 2000);
+  }
+
+  downloadLog.addEventListener("click", () => {
+    const blob = new Blob([JSON.stringify(systemState.callHistory, null, 2)], { type: "application/json" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "system_calls_log.json";
+    link.click();
+  });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const chartContainer = document.getElementById("chartContainer");
+  const ctx = document.getElementById("syscallChart")?.getContext("2d");
+  let syscallChart;
+
+  function updateChart() {
+    if (!chartContainer || !ctx) return;
+
+    const callCounts = {};
+    systemState.callHistory.forEach(call => {
+      callCounts[call.type] = (callCounts[call.type] || 0) + 1;
+    });
+
+    const labels = Object.keys(callCounts);
+    const data = Object.values(callCounts);
+
+    if (syscallChart) {
+      syscallChart.data.labels = labels;
+      syscallChart.data.datasets[0].data = data;
+      syscallChart.update();
+    } else {
+      syscallChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'System Call Frequency',
+            data: data,
+            backgroundColor: labels.map(label => {
+              switch (label) {
+                case 'read': return '#10b981'; // green
+                case 'write': return '#3b82f6'; // blue
+                case 'fork': return '#ef4444'; // red
+                case 'exec': return '#f59e0b'; // amber
+                case 'open': return '#8b5cf6'; // purple
+                default: return '#9ca3af'; // gray
+              }
+            }),
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                color: 'white'
+              }
+            },
+            x: {
+              ticks: {
+                color: 'white'
+              }
             }
-        });
-
-        function fetchLogs() {
-            document.getElementById("logs").innerHTML = "<p>Fetching logs...</p>";
-            // Placeholder for log fetching logic
+          },
+          plugins: {
+            legend: {
+              labels: {
+                color: 'white'
+              }
+            }
+          }
         }
+      });
+    }
+    chartContainer.classList.remove("hidden");
+  }
 
-        function secureSyscall() {
-            alert("Executing Secure System Call...");
-            // Placeholder for system call execution logic
-        }
-    </script>
+  // Call the chart updater after each new syscall submission
+  function updateSecurityAnalysis() {
+    if (systemState.callHistory.length === 0) return;
+    const recentCalls = systemState.callHistory.slice(-5).reverse();
+    let html = '<div class="space-y-3">';
+    recentCalls.forEach(call => {
+      const rule = securityRules[call.type] || securityRules.read;
+      const level = rule.safe(...call.params) ? 'safe' : rule.warning(...call.params) ? 'warning' : 'critical';
+      const color = level === 'safe' ? 'bg-gray-700' : level === 'warning' ? 'bg-yellow-900' : 'bg-red-900';
+      html += `<div class="p-3 rounded-lg ${color}">
+        <div class="font-bold">${call.type.toUpperCase()} call</div>
+        <div class="text-xs opacity-80">${new Date(call.timestamp).toLocaleString()}</div>
+        <div class="mt-1 text-sm">${rule.message(...call.params)}</div>
+        <div class="text-xs mt-1">Params: ${call.params.join(", ")}</div>
+      </div>`;
+    });
+    html += '</div>';
+    securityAnalysis.innerHTML = html;
+    updateChart();
+  }
+</script>
 </body>
 </html>
